@@ -42,20 +42,26 @@ namespace CreateRequest
                 return;
             }
             var info = richTextBox1.Lines.ToList();
-            var test = info.Where(x => x.Contains(": "))
+            var test = info.Where(x => x.Split(new char[] { ':',' '}).Count() > 0)
                 .Select(x =>
                 {
-                    var split = x.Split(':');
+                    if (x.Contains("HTTP/1.1")) return null;
 
-                    if (split.First() == "Cookie" && !checkBox1.Checked) {
-                        return null;
-                    }
+                    var split = x.Split(new char[] { ':','\t'});
 
-                    return $"{textBox1.Text}.AddHeader(\"{split[0]}\",\"{string.Join(":", split.Skip(1)).TrimStart()}\")";
+                    if (split.First().Length == 0)return null;
+
+                    if (split.First().ToLower() == "cookie" && !checkBox1.Checked)return null;
+                    if(split.First().ToLower() == "user-agent")
+                        return $"{textBox1.Text}.UserAgent = {string.Join(":", split.Skip(1)).Trim()};";
+                    if(split.First().ToLower() == "connection" && split[1] == "keep-alive")
+                        return $"{textBox1.Text}.KeepAlive = true;";
+
+                    return $"{textBox1.Text}.AddHeader(\"{split[0]}\",\"{string.Join(":", split.Skip(1)).Trim()}\");";
                 }).ToList();
 
 
-            richTextBox2.Lines = test.ToArray();
+            richTextBox2.Lines = test.Where(x=> x != null).ToArray();
         }
 
         private void button2_Click(object sender, EventArgs e)
