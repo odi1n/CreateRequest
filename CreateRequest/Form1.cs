@@ -41,32 +41,53 @@ namespace CreateRequest
                 MessageBox.Show("Проверьте переменную", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
+            if (comboBox1.Text.Length == 0)
+            {
+                MessageBox.Show("Проверьте под какую библиотеку делаем", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            richTextBox1.Text = richTextBox1.Text.Replace("<", "").Replace(">", "");
+
             var info = richTextBox1.Lines.ToList();
-            var test = info.Where(x => x.Split(new char[] { ':',' '}).Count() > 0)
+            var data = new List<string>();
+            if (comboBox1.SelectedIndex == 0)
+                data = info.Where(x => x.Split(new char[] { ':', ' ' }).Count() > 0)
+                    .Select(x =>
+                    {
+                        if (x.Contains("HTTP/1.1")) return null;
+
+                        var split = x.Split(new char[] { ':', '\t' });
+
+                        if (split.First().Length == 0) return null;
+
+                        if (split.First().ToLower() == "cookie" && !checkBox1.Checked) return null;
+                        if (split.First().ToLower() == "user-agent")
+                            return $"{textBox1.Text}.UserAgent = {string.Join(":", split.Skip(1)).Trim()};";
+                        if (split.First().ToLower() == "connection" && split[1] == "keep-alive")
+                            return $"{textBox1.Text}.KeepAlive = true;";
+
+                        return $"{textBox1.Text}.AddHeader(\"{split[0]}\",\"{string.Join(":", split.Skip(1)).Trim()}\");";
+                    }).ToList();
+            else
+                data = info.Where(x => x.Split(new char[] { ':', ' ' }).Count() > 0)
                 .Select(x =>
                 {
                     if (x.Contains("HTTP/1.1")) return null;
 
-                    var split = x.Split(new char[] { ':','\t'});
+                    var split = x.Split(new char[] { ':', '\t' });
 
-                    if (split.First().Length == 0)return null;
+                    if (split.First().Length == 0) return null;
 
-                    if (split.First().ToLower() == "cookie" && !checkBox1.Checked)return null;
-                    if(split.First().ToLower() == "user-agent")
-                        return $"{textBox1.Text}.UserAgent = {string.Join(":", split.Skip(1)).Trim()};";
-                    if(split.First().ToLower() == "connection" && split[1] == "keep-alive")
-                        return $"{textBox1.Text}.KeepAlive = true;";
+                    if (split.First().ToLower() == "cookie" && !checkBox1.Checked) return null;
 
-                    return $"{textBox1.Text}.AddHeader(\"{split[0]}\",\"{string.Join(":", split.Skip(1)).Trim()}\");";
+                    return $"{textBox1.Text}.Headers.Add(\"{split[0]}\",\"{string.Join(":", split.Skip(1)).Trim()}\");";
                 }).ToList();
 
+            richTextBox2.Lines = data.Where(x => x != null).ToArray();
 
-            richTextBox2.Lines = test.Where(x=> x != null).ToArray();
-        }
-
-        private void button2_Click(object sender, EventArgs e)
-        {
             Clipboard.SetText(richTextBox2.Text);
+
         }
     }
 }
