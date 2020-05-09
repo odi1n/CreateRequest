@@ -63,8 +63,8 @@ namespace CreateRequest
 
                         if (split.First().ToLower() == "cookie" && !checkBox1.Checked) return null;
                         if (split.First().ToLower() == "user-agent")
-                            return $"{textBox1.Text}.UserAgent = {string.Join(":", split.Skip(1)).Trim()};";
-                        if (split.First().ToLower() == "connection" && split[1] == "keep-alive")
+                            return $"{textBox1.Text}.UserAgent = \"{string.Join(":", split.Skip(1)).Trim()}\";";
+                        if (split.First().ToLower() == "connection" || split[1] == "keep-alive")
                             return $"{textBox1.Text}.KeepAlive = true;";
 
                         return $"{textBox1.Text}.AddHeader(\"{split[0]}\",\"{string.Join(":", split.Skip(1)).Trim()}\");";
